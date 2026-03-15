@@ -1,0 +1,1 @@
+../../../backend/n8n/schema_db.md

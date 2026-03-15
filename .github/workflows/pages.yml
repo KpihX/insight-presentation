@@ -1,0 +1,60 @@
+name: Deploy insight documentation
+
+on:
+  push:
+    branches:
+      - master
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout presentation repository
+        uses: actions/checkout@v4
+
+      - name: Checkout source insight repository
+        uses: actions/checkout@v4
+        with:
+          repository: KpihX/insight
+          ref: master
+          path: source
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Materialize linked documentation
+        env:
+          INSIGHT_SOURCE_ROOT: ${{ github.workspace }}/source
+        run: python scripts/materialize_docs.py
+
+      - name: Upload pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
